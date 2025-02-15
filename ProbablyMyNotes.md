@@ -1,7 +1,7 @@
 # Main
 - delete unused files: ``` find . -type f ! -name "*.conf" -exec rm {} \;```
 
-## Recon
+## Basic Recon
 - Clean processes first: ``` sudo airmon-ng check kill ```
 ### 
 - monitor channel has another name 
@@ -175,3 +175,24 @@
    ```
 11. ``` sudo wpa_supplicant -Dnl80211 -iwlan3 -c  wpa3saepsk.conf```
 12. ``` sudo dhclient wlan3 -v ```
+
+## WPA 2 MGT (Recon stage)
+### Check domain name of this AP
+- https://github.com/r4ulcl/wifi_db
+1. Choose channel to listen and dump pcap ``` airodump-ng wlan0mon -w ./scanc44 -c 44 --wps ```
+2. Go to the tool path ``` cd /root/tools/wifi_db ```
+3. choose the kasmite file name for last param ``` python3 wifi_db.py -d wifichallenge.SQLITE /home/user/newwifi/scanc44-01 ```
+4. Browse ``` sqlitebrowser wifichallenge.SQLITE ``` and go "browse data" tab, change table to IdentityAP
+
+### Get email address of server cert
+- https://gist.github.com/r4ulcl/f3470f097d1cd21dbc5a238883e79fb2
+1. ``` cd /root/tools/ ```
+2. ``` bash pcapFilter.sh -f /home/user/newwifi/scanc44-01.cap -C ```
+3. Find Certificate: Subject --> last value
+
+### Check EAP method 
+- https://github.com/blackarrowsec/EAP_buster
+1. ``` cd /root/tools/EAP_buster/ ```
+2. using tool wifi_db to check users in this network (Table: IdentityAP)
+   
+   【OR] use the name found in there then ``` bash ./EAP_buster.sh $SSID 'GLOBAL\GlobalAdmin' wlan1 ``` 
