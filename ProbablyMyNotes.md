@@ -61,9 +61,11 @@
 
 
 ## WEP
-1. https://github.com/alenperic/OSWP-Study-Guide?tab=readme-ov-file#wep-wired-equivalent-privacy 
+- besside-ng NOT ALLOWED
+- Try all the attacks
+1. https://reconshell.com/wireless-pentesting-cheat-sheet/
 - Target client not the host when runnning besside-ng
-2. prepare wep.conf
+1. prepare wep.conf
     ```
     network={
         ssid="$ESSID"
@@ -73,8 +75,8 @@
     }
 
     ```
-3. ``` sudo wpa_supplicant -D nl80211 -i wlan2 -c wep.conf ```
-4. ``` sudo dhclient wlan2 -v ```
+2. ``` sudo wpa_supplicant -D nl80211 -i wlan2 -c wep.conf ```
+3. ``` sudo dhclient wlan2 -v ```
 
 
 ## WPA2 PSK
