@@ -200,6 +200,7 @@
 3. Find Certificate: Subject --> last value
 
 ### Check EAP method 
+- banned
 - https://github.com/blackarrowsec/EAP_buster
 1. ``` cd /home/kali/Downloads/wifi-tools/EAP_buster/ ```
 2. using tool wifi_db to check users in this network (Table: IdentityAP)
@@ -208,6 +209,7 @@
 
 ## WPA 2 MGT - (Deauth attack) 
 - Attack and Crack Client password to login as that user 
+- banned
 - ``` git clone https://github.com/s0lst1c3/eaphammer ```
 1. ``` cd /home/kali/Downloads/wifi-tools/eaphammer ```
 2. ``` python3 ./eaphammer --cert-wizard``` random fill something
